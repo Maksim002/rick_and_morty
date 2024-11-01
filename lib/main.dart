@@ -24,6 +24,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final GlobalKey<NavigatorState> rootNavigatorKey = GlobalKey<NavigatorState>();
+
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => CharacterBloc(ApiService())),
@@ -35,29 +37,43 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp.router(
         routerConfig: GoRouter(
+          navigatorKey: rootNavigatorKey,
           routes: [
             GoRoute(path: '/', builder: (context, state) => const HomeScreen()),
             GoRoute(path: '/character_page', builder: (context, state) => const CharacterPage()),
             GoRoute(path: '/episode_page', builder: (context, state) => const EpisodePage()),
-            GoRoute(path: '/character/:id', builder: (context, state) {
-              final id = state.params['id']!;
-              return CharacterDetailPage(id: int.parse(id));
-            }),
-            GoRoute(path: '/episodes_detail/:id', builder: (context, state) {
-              final id = state.params['id']!;
-              return EpisodesDetailPage(id: int.parse(id));
-            }),
-            GoRoute(path: '/location_detail/:id', builder: (context, state) {
-              final id = state.params['id']!;
-              return LocationDetailPage(id: int.parse(id));
-            })
+            GoRoute(
+              path: '/character/:id',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) {
+                final id = state.params['id']!;
+                return CharacterDetailPage(id: int.parse(id));
+              },
+            ),
+            GoRoute(
+              path: '/episodes_detail/:id',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) {
+                final id = state.params['id']!;
+                return EpisodesDetailPage(id: int.parse(id));
+              },
+            ),
+            GoRoute(
+              path: '/location_detail/:id',
+              parentNavigatorKey: rootNavigatorKey,
+              builder: (context, state) {
+                final id = state.params['id']!;
+                return LocationDetailPage(id: int.parse(id));
+              },
+            )
           ],
         ),
-          title: 'Rick and Morty'
       ),
     );
   }
 }
+
+int _selectedIndex = 0;
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -67,12 +83,12 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  int _selectedIndex = 0;
+  final PageStorageBucket _bucket = PageStorageBucket();
 
   final List<Widget> _pages = [
-    const CharacterPage(),
-    const EpisodePage(),
-    const LocationPage(),
+    const CharacterPage(key: PageStorageKey('CharacterPage')),
+    const EpisodePage(key: PageStorageKey('EpisodePage')),
+    const LocationPage(key: PageStorageKey('LocationPage')),
   ];
 
   final List<String> _label = [
@@ -94,20 +110,23 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(_label[_selectedIndex]),
       ),
-      body: _pages[_selectedIndex],
+      body: PageStorage(
+        bucket: _bucket,
+        child: _pages[_selectedIndex],
+      ),
       bottomNavigationBar: BottomNavigationBar(
         items: <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: const Icon(Icons.person),
-            label: _label[_selectedIndex],
+            label: _label[0],
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.movie),
-            label: _label[_selectedIndex],
+            label: _label[1],
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.place),
-            label: _label[_selectedIndex],
+            label: _label[2],
           ),
         ],
         currentIndex: _selectedIndex,
