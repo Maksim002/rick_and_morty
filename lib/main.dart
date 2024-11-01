@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -56,9 +57,9 @@ class _HomeScreenState extends State<HomeScreen> {
   ];
 
   final List<String> _label = [
-    'Персонажи',
-    'Эпизоды',
-    'Локации',
+    'Characters',
+    'Episodes',
+    'Locations',
   ];
 
   void _onItemTapped(int index) {

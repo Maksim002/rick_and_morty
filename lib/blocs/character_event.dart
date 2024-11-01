@@ -1,9 +1,19 @@
 
+// Базовый класс для событий, связанных с персонажами
+class CharacterEvent {
+  final String? filter;
+  final bool? isChanges;
+  final String value;
 
-abstract class CharacterEvent {} // Абстрактный класс для события персонажа
+  CharacterEvent(this.filter, {this.isChanges = false, this.value = ""});
+}
 
+// Событие для первой загрузки персонажей
 class FetchCharacters extends CharacterEvent {
-  final int page; // Номер страницы для загрузки
+  FetchCharacters(super.filter, {super.isChanges});
+}
 
-  FetchCharacters({this.page = 1}); // Конструктор с параметром по умолчанию
+// Событие для добавления следующей страницы персонажей
+class AddFetchCharacters extends CharacterEvent {
+  AddFetchCharacters(super.filter, {super.value});
 }

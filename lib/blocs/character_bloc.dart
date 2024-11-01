@@ -1,43 +1,57 @@
-import 'package:flutter_bloc/flutter_bloc.dart'; // Импорт библиотеки Flutter BLoC для управления состоянием приложения
-import 'package:rick_and_morty/blocs/character_event.dart'; // Импорт файла с определением событий для BLoC персонажей
-import 'package:rick_and_morty/blocs/character_state.dart'; // Импорт файла с определением состояний для BLoC персонажей
-import 'package:rick_and_morty/models/character.dart'; // Импорт модели персонажа, представляющей данные персонажа
-import 'package:rick_and_morty/services/api_service.dart'; // Импорт сервиса для работы с API, который предоставляет данные о персонажах
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:rick_and_morty/blocs/character_event.dart';
+import 'package:rick_and_morty/blocs/character_state.dart';
+import 'package:rick_and_morty/models/character.dart';
+import 'package:rick_and_morty/services/api_service.dart';
 
 class CharacterBloc extends Bloc<CharacterEvent, CharacterState> {
-  final ApiService _apiService; // Сервис для работы с API
-  final List<Character> _sendCharacters = []; // Список для хранения загруженных персонажей
-  int _currentPage = 1; // Текущая страница
-  bool _hasNextPage = true; // Флаг, указывающий, есть ли следующая страница
+  final ApiService _apiService; // Сервис для работы с API персонажей
+  final List<Character> _sendCharacters = []; // Список всех загруженных персонажей
+  List<Character> _filteredCharacters = []; // Список персонажей после фильтрации
+  bool _hasNextPage = true; // Флаг наличия следующей страницы
+  int _currentPage = 1; // Текущая страница для загрузки
 
-  CharacterBloc(this._apiService) : super(CharacterInitial()) { // Конструктор BLoC
-    // Обработка событий
+  CharacterBloc(this._apiService) : super(CharacterInitial()) {
     on<CharacterEvent>((event, emit) async {
-      if (_sendCharacters.isEmpty) {
-        emit(CharacterLoading()); // Изменяем состояние на загрузку
-      }
+      _validChanges(event);
       try {
-        // Проверяем, если событие - FetchCharacters и есть следующая страница
-        if (event is FetchCharacters && _hasNextPage) {
-          // Запрашиваем данные из API
-          final data = await _apiService.fetchCharacters(_currentPage);
-          // Добавляем загруженные персонажи в список
-          _sendCharacters.addAll((data['results'] as List)
-              .map((json) => Character.fromJson(json))
-              .toList());
-          // Проверяем, есть ли следующая страница
-          _hasNextPage = data['info']['next'] != null;
-          // Увеличиваем номер страницы, если есть следующая
-          if (_hasNextPage) _currentPage++;
-
-          // Изменяем состояние на загруженные данные
-          emit(CharacterLoaded(
-              dataList: _sendCharacters, hasNextPage: _hasNextPage));
+        if (_sendCharacters.isEmpty) emit(CharacterLoading());
+        if (event is FetchCharacters && _hasNextPage && _sendCharacters.isEmpty) {
+          await _fetchAndAddCharacters(event.filter, emit);
+        } else if (event is AddFetchCharacters && _hasNextPage) {
+          await _fetchAndAddCharacters(event.filter, emit);
         }
+        filterCharacters(event.value);
       } catch (e) {
-        // Если произошла ошибка, изменяем состояние на ошибку
         emit(CharacterError('Ошибка загрузки данных: $e'));
       }
     });
+  }
+
+  // Функция загрузки персонажей с сервера и добавления в список
+  Future<void> _fetchAndAddCharacters(String? filter, Emitter<CharacterState> emit) async {
+    final data = await _apiService.fetchCharacters(_currentPage, filter);
+    _sendCharacters.addAll((data['results'] as List)
+        .map((json) => Character.fromJson(json))
+        .toList());
+    _hasNextPage = data['info']['next'] != null;
+    if (_hasNextPage) _currentPage++;
+  }
+
+  // Фильтрация персонажей по имени и отправка отфильтрованного списка
+  void filterCharacters(String value) {
+    _filteredCharacters = _sendCharacters.where((character) {
+      return value.isEmpty || character.name.toLowerCase().contains(value.toLowerCase());
+    }).toList();
+    emit(CharacterLoaded(dataList: _filteredCharacters, hasNextPage: _hasNextPage));
+  }
+
+  // Сброс данных, если была изменена фильтрация или другой значимый параметр
+  void _validChanges(CharacterEvent event) {
+    if (event.isChanges!) {
+      _sendCharacters.clear();
+      _hasNextPage = true;
+      _currentPage = 1;
+    }
   }
 }
