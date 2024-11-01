@@ -1,38 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import 'package:rick_and_morty/blocs/character_bloc.dart';
-import 'package:rick_and_morty/blocs/character_event.dart';
-import 'package:rick_and_morty/blocs/character_state.dart';
-import 'package:rick_and_morty/models/character.dart';
+import 'package:rick_and_morty/api/models/character.dart';
+import 'package:rick_and_morty/character/main/blocs/character_bloc.dart';
+import 'package:rick_and_morty/character/main/blocs/character_event.dart';
+import 'package:rick_and_morty/character/main/blocs/character_state.dart';
 
-// Экран для отображения и поиска персонажей
+// Виджет для содержимого страницы персонажей
 class CharacterPage extends StatefulWidget {
   const CharacterPage({super.key});
 
   @override
-  State<CharacterPage> createState() => _CharacterPageState();
+  State<CharacterPage> createState() => _CharacterPageContentState();
 }
 
-class _CharacterPageState extends State<CharacterPage> {
-  late final ScrollController _scrollController = ScrollController()
-    ..addListener(_onScroll);
+class _CharacterPageContentState extends State<CharacterPage> {
+  final ScrollController _scrollController = ScrollController();
   String? _filter;
   String _value = "";
 
   @override
   void initState() {
     super.initState();
-    // Инициализируем загрузку персонажей при открытии экрана
+    _scrollController.addListener(_onScroll);
     context.read<CharacterBloc>().add(FetchCharacters(_filter));
   }
 
-  // Обработчик для автоматической подгрузки данных при достижении конца списка
   void _onScroll() {
     if (_scrollController.position.atEdge && _scrollController.position.pixels != 0) {
-      context
-          .read<CharacterBloc>()
-          .add(AddFetchCharacters(_filter, value: _value));
+      context.read<CharacterBloc>().add(AddFetchCharacters(_filter, value: _value));
     }
   }
 
@@ -65,7 +61,57 @@ class _CharacterPageState extends State<CharacterPage> {
     );
   }
 
-  // Показ диалогового окна для выбора фильтрации
+  // Поле поиска с фильтрацией персонажей
+  Widget _buildSearchField() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 10.0),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          TextField(
+            decoration: InputDecoration(
+              hintText: 'Find a character',
+              prefixIcon: const Icon(Icons.search, color: Colors.grey),
+              filled: true,
+              fillColor: Colors.grey[200],
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(30.0),
+                borderSide: BorderSide.none,
+              ),
+            ),
+            onChanged: (value) {
+              setState(() => _value = value);
+              context.read<CharacterBloc>().filterCharacters(value);
+            },
+          ),
+          Positioned(
+            right: 4,
+            top: 5,
+            child: Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.cyan,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.2),
+                    spreadRadius: 1,
+                    blurRadius: 5,
+                    offset: const Offset(3, 3),
+                  ),
+                ],
+              ),
+              child: IconButton(
+                icon: const Icon(Icons.filter_list, color: Colors.white),
+                onPressed: () => _showFilterDialog(context),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Диалог для выбора фильтра
   void _showFilterDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -76,10 +122,10 @@ class _CharacterPageState extends State<CharacterPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _filterOption('Unknown', 'Filtering by name'),
-              _filterOption('Alive', 'Filter by status'),
-              _filterOption('Dead', 'Filtering by gender'),
-              _filterOption(null, 'Search for everyone'),
+              _filterOption(context, 'unknown', 'Filtering by unknown'),
+              _filterOption(context, 'Alive', 'Filter by Alive'),
+              _filterOption(context, 'Dead', 'Filtering by Dead'),
+              _filterOption(context, null, 'Search for everyone'),
             ],
           ),
           actions: [
@@ -93,53 +139,19 @@ class _CharacterPageState extends State<CharacterPage> {
     );
   }
 
-  // Создание кнопок для выбора фильтра
-  TextButton _filterOption(String? filterValue, String text) {
+  // Кнопка фильтрации
+  TextButton _filterOption(BuildContext context, String? filterValue, String text) {
     return TextButton(
       onPressed: () {
-        setState(() => _filter = filterValue); // Обновляем фильтр
-        context.read<CharacterBloc>().add(FetchCharacters(_filter, isChanges: true)); // Запуск фильтрации
+        setState(() => _filter = filterValue);
+        context.read<CharacterBloc>().add(FetchCharacters(_filter, isChanges: true));
         Navigator.of(context).pop();
       },
       child: Text(text),
     );
   }
 
-  // Поле поиска с фильтрацией персонажей
-  Widget _buildSearchField() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 10.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              decoration: InputDecoration(
-                hintText: 'Find a character',
-                prefixIcon: const Icon(Icons.search, color: Colors.grey),
-                filled: true,
-                fillColor: Colors.grey[200],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30.0),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              onChanged: (value) {
-                setState(() => _value = value); // Обновляем текст фильтра
-                context.read<CharacterBloc>().filterCharacters(value); // Применяем фильтр
-              },
-            ),
-          ),
-          const SizedBox(width: 10),
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            onPressed: () => _showFilterDialog(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Список персонажей с возможностью подгрузки
+  // Список персонажей
   Widget _buildCharacterList(CharacterLoaded state) {
     return ListView.builder(
       controller: _scrollController,
@@ -154,7 +166,7 @@ class _CharacterPageState extends State<CharacterPage> {
     );
   }
 
-  // Метод создания элемента списка с переходом на экран деталей через GoRouter с использованием id
+  // Элемент списка персонажей
   ListTile _buildCharacterTile(Character character) {
     return ListTile(
       contentPadding: const EdgeInsets.symmetric(vertical: 4, horizontal: 16),
@@ -176,10 +188,7 @@ class _CharacterPageState extends State<CharacterPage> {
           Text("${character.gender}, ${character.species}", style: TextStyle(color: Colors.grey[700], fontSize: 12.0)),
         ],
       ),
-      onTap: () {
-        // Переход на экран деталей с использованием GoRouter и передачи id персонажа в URL
-        context.go('/character/${character.id}');
-      },
+      onTap: () => context.go('/character/${character.id}'), // Переход на экран деталей персонажа
     );
   }
 }

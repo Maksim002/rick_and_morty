@@ -1,15 +1,15 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:rick_and_morty/blocs/character_event.dart';
-import 'package:rick_and_morty/blocs/character_state.dart';
-import 'package:rick_and_morty/models/character.dart';
-import 'package:rick_and_morty/services/api_service.dart';
+import 'package:rick_and_morty/api/api_service.dart';
+import 'package:rick_and_morty/api/models/character.dart';
+import 'package:rick_and_morty/character/main/blocs/character_event.dart';
+import 'package:rick_and_morty/character/main/blocs/character_state.dart';
 
 class CharacterBloc extends Bloc<CharacterEvent, CharacterState> {
-  final ApiService _apiService; // Сервис для работы с API персонажей
-  final List<Character> _sendCharacters = []; // Список всех загруженных персонажей
-  List<Character> _filteredCharacters = []; // Список персонажей после фильтрации
-  bool _hasNextPage = true; // Флаг наличия следующей страницы
-  int _currentPage = 1; // Текущая страница для загрузки
+  final ApiService _apiService;
+  final List<Character> _sendCharacters = [];
+  List<Character> _filteredCharacters = [];
+  bool _hasNextPage = true;
+  int _currentPage = 1;
 
   CharacterBloc(this._apiService) : super(CharacterInitial()) {
     on<CharacterEvent>((event, emit) async {
@@ -23,7 +23,7 @@ class CharacterBloc extends Bloc<CharacterEvent, CharacterState> {
         }
         filterCharacters(event.value);
       } catch (e) {
-        emit(CharacterError('Ошибка загрузки данных: $e'));
+        emit(CharacterError('Data upload error: $e'));
       }
     });
   }
