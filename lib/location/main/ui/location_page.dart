@@ -106,7 +106,7 @@ class _LocationPageContentState extends State<LocationPage> {
                 "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTu1INW7Qclp2JKKXsDQUsPKUJqH2YTlHaj5w&s");
           }
         } else {
-          if (_scrollController.position.atEdge && _scrollController.position.pixels != 0) {
+          if (state.dataList.length >= 4) {
             return const Center(child: CircularProgressIndicator());
           }
         }

@@ -16,8 +16,8 @@ class CharacterPage extends StatefulWidget {
 
 class _CharacterPageContentState extends State<CharacterPage> {
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _controller = TextEditingController();
   String? _filter;
-  String _value = "";
 
   @override
   void initState() {
@@ -27,8 +27,11 @@ class _CharacterPageContentState extends State<CharacterPage> {
   }
 
   void _onScroll() {
-    if (_scrollController.position.atEdge && _scrollController.position.pixels != 0) {
-      context.read<CharacterBloc>().add(AddFetchCharacters(_filter, value: _value));
+    if (_scrollController.position.atEdge &&
+        _scrollController.position.pixels != 0) {
+      context
+          .read<CharacterBloc>()
+          .add(AddFetchCharacters(_filter, value: _controller.text));
     }
   }
 
@@ -71,6 +74,7 @@ class _CharacterPageContentState extends State<CharacterPage> {
         clipBehavior: Clip.none,
         children: [
           TextField(
+            controller: _controller,
             decoration: InputDecoration(
               hintText: 'Find a character',
               prefixIcon: const Icon(Icons.search, color: Colors.grey),
@@ -82,7 +86,7 @@ class _CharacterPageContentState extends State<CharacterPage> {
               ),
             ),
             onChanged: (value) {
-              setState(() => _value = value);
+              setState(() =>  value);
               context.read<CharacterBloc>().filterCharacters(value);
             },
           ),
@@ -104,7 +108,12 @@ class _CharacterPageContentState extends State<CharacterPage> {
               ),
               child: IconButton(
                 icon: const Icon(Icons.filter_list, color: Colors.white),
-                onPressed: () => _showFilterDialog(),
+                onPressed: () {
+                  _scrollController.animateTo(0,
+                      duration: const Duration(milliseconds: 50),
+                      curve: Curves.easeInOut);
+                  _showFilterDialog();
+                },
               ),
             ),
           ),
@@ -146,7 +155,9 @@ class _CharacterPageContentState extends State<CharacterPage> {
     return TextButton(
       onPressed: () {
         setState(() => _filter = filterValue);
-        context.read<CharacterBloc>().add(FetchCharacters(_filter, isChanges: true));
+        _controller.clear();
+        context.read<CharacterBloc>()
+            .add(FetchCharacters(_filter, isChanges: true));
         Navigator.of(context).pop();
       },
       child: Text(text),
@@ -162,7 +173,7 @@ class _CharacterPageContentState extends State<CharacterPage> {
         if (index < state.dataList.length) {
           return _buildCharacterTile(state.dataList[index]);
         } else {
-          if (_scrollController.position.atEdge && _scrollController.position.pixels != 0) {
+          if (state.dataList.length >= 10) {
             return const Center(child: CircularProgressIndicator());
           }
         }
@@ -185,11 +196,15 @@ class _CharacterPageContentState extends State<CharacterPage> {
       title: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(character.status, style: TextStyle(color: character.statusColor(), fontSize: 14.0)),
+          Text(character.status,
+              style: TextStyle(color: character.statusColor(), fontSize: 14.0)),
           const SizedBox(height: 4.0),
-          Text(character.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
+          Text(character.name,
+              style:
+                  const TextStyle(fontWeight: FontWeight.bold, fontSize: 16.0)),
           const SizedBox(height: 2.0),
-          Text("${character.gender}, ${character.species}", style: TextStyle(color: Colors.grey[700], fontSize: 12.0)),
+          Text("${character.gender}, ${character.species}",
+              style: TextStyle(color: Colors.grey[700], fontSize: 12.0)),
         ],
       ),
       onTap: () => context.go('/character/${character.id}'),

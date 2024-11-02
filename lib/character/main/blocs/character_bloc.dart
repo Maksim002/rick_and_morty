@@ -14,17 +14,18 @@ class CharacterBloc extends Bloc<CharacterEvent, CharacterState> {
   CharacterBloc(this._apiService) : super(CharacterInitial()) {
     on<CharacterEvent>((event, emit) async {
       _validChanges(event);
-      try {
-        if (_sendCharacters.isEmpty) emit(CharacterLoading());
-        if (event is FetchCharacters && _hasNextPage && _sendCharacters.isEmpty) {
-          await _fetchAndAddCharacters(event.filter, emit);
-        } else if (event is AddFetchCharacters && _hasNextPage) {
-          await _fetchAndAddCharacters(event.filter, emit);
+        try {
+          if (_sendCharacters.isEmpty) emit(CharacterLoading());
+          if (event is FetchCharacters && _hasNextPage &&
+              _sendCharacters.isEmpty) {
+            await _fetchAndAddCharacters(event.filter, emit);
+          } else if (event is AddFetchCharacters && _hasNextPage) {
+            await _fetchAndAddCharacters(event.filter, emit);
+          }
+          filterCharacters(event.value ?? "");
+        } catch (e) {
+          emit(CharacterError('Data upload error: $e'));
         }
-        filterCharacters(event.value);
-      } catch (e) {
-        emit(CharacterError('Data upload error: $e'));
-      }
     });
   }
 
@@ -43,11 +44,12 @@ class CharacterBloc extends Bloc<CharacterEvent, CharacterState> {
     _filteredCharacters = _sendCharacters.where((character) {
       return value.isEmpty || character.name.toLowerCase().contains(value.toLowerCase());
     }).toList();
+
     emit(CharacterLoaded(dataList: _filteredCharacters, hasNextPage: _hasNextPage));
   }
 
   // Сброс данных, если была изменена фильтрация или другой значимый параметр
-  void _validChanges(CharacterEvent event) {
+  _validChanges(CharacterEvent event) {
     if (event.isChanges!) {
       _sendCharacters.clear();
       _hasNextPage = true;

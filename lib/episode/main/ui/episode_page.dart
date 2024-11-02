@@ -100,7 +100,7 @@ class _CharacterPageContentState extends State<EpisodePage> {
         if (index < state.dataList.length) {
           return _buildCharacterTile(state.dataList[index]);
         } else {
-          if (_scrollController.position.atEdge && _scrollController.position.pixels != 0) {
+          if (state.dataList.length >= 10) {
             return const Center(child: CircularProgressIndicator());
           }
         }
