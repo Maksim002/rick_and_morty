@@ -92,7 +92,7 @@ class _CharacterPageContentState extends State<CharacterPage> {
           ),
           Positioned(
             right: 4,
-            top: 5,
+            top: 4,
             child: Container(
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
