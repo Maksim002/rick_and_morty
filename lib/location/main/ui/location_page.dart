@@ -39,24 +39,26 @@ class _LocationPageContentState extends State<LocationPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<LocationBloc, LocationState>(
-      builder: (context, state) {
-        if (state is LocationLoading) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is LocationLoaded) {
-          return Scaffold(
-            body: Column(
-              children: [
-                _buildSearchField(context),
-                Expanded(child: _buildLocationList(state)),
-              ],
-            ),
-          );
-        } else if (state is LocationError) {
-          return Center(child: Text(state.message));
-        }
-        return const Center(child: Text('No data available'));
-      },
+    return SafeArea(
+      child:  BlocBuilder<LocationBloc, LocationState>(
+        builder: (context, state) {
+          if (state is LocationLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is LocationLoaded) {
+            return Scaffold(
+              body: Column(
+                children: [
+                  _buildSearchField(context),
+                  Expanded(child: _buildLocationList(state)),
+                ],
+              ),
+            );
+          } else if (state is LocationError) {
+            return Center(child: Text(state.message));
+          }
+          return const Center(child: Text('No data available'));
+        },
+      ),
     );
   }
 
@@ -104,7 +106,9 @@ class _LocationPageContentState extends State<LocationPage> {
                 "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTu1INW7Qclp2JKKXsDQUsPKUJqH2YTlHaj5w&s");
           }
         } else {
-          return const Center(child: CircularProgressIndicator());
+          if (_scrollController.position.atEdge && _scrollController.position.pixels != 0) {
+            return const Center(child: CircularProgressIndicator());
+          }
         }
       },
     );

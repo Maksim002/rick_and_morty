@@ -40,24 +40,26 @@ class _CharacterPageContentState extends State<CharacterPage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<CharacterBloc, CharacterState>(
-      builder: (context, state) {
-        if (state is CharacterLoading) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is CharacterLoaded) {
-          return Scaffold(
-            body: Column(
-              children: [
-                _buildSearchField(),
-                Expanded(child: _buildCharacterList(state)),
-              ],
-            ),
-          );
-        } else if (state is CharacterError) {
-          return Center(child: Text(state.message));
-        }
-        return const Center(child: Text('No data available'));
-      },
+    return SafeArea(
+      child: BlocBuilder<CharacterBloc, CharacterState>(
+        builder: (context, state) {
+          if (state is CharacterLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is CharacterLoaded) {
+            return Scaffold(
+              body: Column(
+                children: [
+                  _buildSearchField(),
+                  Expanded(child: _buildCharacterList(state)),
+                ],
+              ),
+            );
+          } else if (state is CharacterError) {
+            return Center(child: Text(state.message));
+          }
+          return const Center(child: Text('No data available'));
+        },
+      ),
     );
   }
 
@@ -102,7 +104,7 @@ class _CharacterPageContentState extends State<CharacterPage> {
               ),
               child: IconButton(
                 icon: const Icon(Icons.filter_list, color: Colors.white),
-                onPressed: () => _showFilterDialog(context),
+                onPressed: () => _showFilterDialog(),
               ),
             ),
           ),
@@ -112,7 +114,7 @@ class _CharacterPageContentState extends State<CharacterPage> {
   }
 
   // Диалог для выбора фильтра
-  void _showFilterDialog(BuildContext context) {
+  void _showFilterDialog() {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -122,10 +124,10 @@ class _CharacterPageContentState extends State<CharacterPage> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _filterOption(context, 'unknown', 'Filtering by unknown'),
-              _filterOption(context, 'Alive', 'Filter by Alive'),
-              _filterOption(context, 'Dead', 'Filtering by Dead'),
-              _filterOption(context, null, 'Search for everyone'),
+              _filterOption('unknown', 'Filtering by unknown'),
+              _filterOption('Alive', 'Filter by Alive'),
+              _filterOption('Dead', 'Filtering by Dead'),
+              _filterOption(null, 'Search for everyone'),
             ],
           ),
           actions: [
@@ -140,7 +142,7 @@ class _CharacterPageContentState extends State<CharacterPage> {
   }
 
   // Кнопка фильтрации
-  TextButton _filterOption(BuildContext context, String? filterValue, String text) {
+  TextButton _filterOption(String? filterValue, String text) {
     return TextButton(
       onPressed: () {
         setState(() => _filter = filterValue);
@@ -160,7 +162,9 @@ class _CharacterPageContentState extends State<CharacterPage> {
         if (index < state.dataList.length) {
           return _buildCharacterTile(state.dataList[index]);
         } else {
-          return const Center(child: CircularProgressIndicator());
+          if (_scrollController.position.atEdge && _scrollController.position.pixels != 0) {
+            return const Center(child: CircularProgressIndicator());
+          }
         }
       },
     );
@@ -188,7 +192,7 @@ class _CharacterPageContentState extends State<CharacterPage> {
           Text("${character.gender}, ${character.species}", style: TextStyle(color: Colors.grey[700], fontSize: 12.0)),
         ],
       ),
-      onTap: () => context.go('/character/${character.id}'), // Переход на экран деталей персонажа
+      onTap: () => context.go('/character/${character.id}'),
     );
   }
 }

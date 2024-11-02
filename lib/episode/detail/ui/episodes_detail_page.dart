@@ -12,10 +12,10 @@ class EpisodesDetailPage extends StatefulWidget {
   final int id;
 
   @override
-  State<EpisodesDetailPage> createState() => _CharacterDetailPageState();
+  State<EpisodesDetailPage> createState() => _EpisodesDetailPageState();
 }
 
-class _CharacterDetailPageState extends State<EpisodesDetailPage> {
+class _EpisodesDetailPageState extends State<EpisodesDetailPage> {
   @override
   void initState() {
     super.initState();
@@ -75,7 +75,7 @@ Widget characterDetailContent(BuildContext context, EpisodesDetail character) {
         ],
       ),
       characterAvatar(
-          "https://cdn-icons-png.flaticon.com/512/109/109700.png",
+          "https://cdn-icons-png.flaticon.com/512/189/189638.png",
           screenHeight,
           context),
     ],

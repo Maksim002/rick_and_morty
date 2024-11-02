@@ -39,24 +39,26 @@ class _CharacterPageContentState extends State<EpisodePage> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<EpisodeBloc, EpisodeState>(
-      builder: (context, state) {
-        if (state is EpisodeLoading) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (state is EpisodeLoaded) {
-          return Scaffold(
-            body: Column(
-              children: [
-                _buildSearchField(context),
-                Expanded(child: _buildCharacterList(state)),
-              ],
-            ),
-          );
-        } else if (state is EpisodeError) {
-          return Center(child: Text(state.message));
-        }
-        return const Center(child: Text('No data available'));
-      },
+    return SafeArea(
+      child: BlocBuilder<EpisodeBloc, EpisodeState>(
+        builder: (context, state) {
+          if (state is EpisodeLoading) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (state is EpisodeLoaded) {
+            return Scaffold(
+              body: Column(
+                children: [
+                  _buildSearchField(context),
+                  Expanded(child: _buildCharacterList(state)),
+                ],
+              ),
+            );
+          } else if (state is EpisodeError) {
+            return Center(child: Text(state.message));
+          }
+          return const Center(child: Text('No data available'));
+        },
+      ),
     );
   }
 
@@ -98,7 +100,9 @@ class _CharacterPageContentState extends State<EpisodePage> {
         if (index < state.dataList.length) {
           return _buildCharacterTile(state.dataList[index]);
         } else {
-          return const Center(child: CircularProgressIndicator());
+          if (_scrollController.position.atEdge && _scrollController.position.pixels != 0) {
+            return const Center(child: CircularProgressIndicator());
+          }
         }
       },
     );
